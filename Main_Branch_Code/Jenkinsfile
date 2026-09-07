@@ -58,7 +58,8 @@ pipeline {
 
                         git add Main_Branch_Code/k8s/deployment.yaml
                         git diff --cached --quiet || git commit -m "updated image to ${IMAGE_TAG}"
-                        git push https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/gunjalakhil/multiBranchPipeline.git HEAD:main
+                        git push https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/gunjalaakhil/multiBranchPipeline.git HEAD:main
+
                         """
                     }
                 }
