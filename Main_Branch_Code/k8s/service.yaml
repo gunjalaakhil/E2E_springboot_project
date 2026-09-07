@@ -3,9 +3,10 @@ kind: Service
 metadata:
   name: movie-app-service
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: movie-app
   ports:
-    - port: 80
-      targetPort: 5000
+    - port: 80        # Service port (what clients connect to)
+      targetPort: 5000 # Container port (your app listens on)
+      nodePort: 30080  # Optional: fixed NodePort (range 30000–32767)
