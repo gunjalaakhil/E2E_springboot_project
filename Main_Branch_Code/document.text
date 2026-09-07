@@ -1,0 +1,61 @@
+#!/bin/bash
+
+set -e
+
+echo "======================================"
+echo " Installing Jenkins"
+echo "======================================"
+
+# Update packages
+sudo apt update -y
+
+# Install Java 21 and wget
+sudo apt install -y fontconfig openjdk-21-jre wget
+
+# Verify Java
+echo "Java version:"
+java -version
+
+# Create keyrings directory
+sudo mkdir -p /etc/apt/keyrings
+
+# Download Jenkins signing key
+sudo wget -O /etc/apt/keyrings/jenkins-keyring.asc \
+  https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
+
+# Add Jenkins repository
+echo "deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" \
+  | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+# Update package lists
+sudo apt update -y
+
+# Install Jenkins
+sudo apt install -y jenkins
+
+# Enable Jenkins on boot
+sudo systemctl enable jenkins
+
+# Start Jenkins
+sudo systemctl start jenkins
+
+# Show Jenkins status
+echo ""
+echo "======================================"
+echo " Jenkins Status"
+echo "======================================"
+
+sudo systemctl --no-pager status jenkins
+
+echo ""
+echo "======================================"
+echo " Jenkins Initial Admin Password"
+echo "======================================"
+
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+echo ""
+echo "======================================"
+echo " Jenkins installed successfully!"
+echo "======================================"
+echo "Jenkins URL: http://<EC2-PUBLIC-IP>:8080"
