@@ -1,98 +1,118 @@
-pipeline{
-    agent{
-        docker{
-            image 'maven:3.9.6-eclipse-temurin-17'
-            args '--user root -v $HOME/.m2:/root/.m2 -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
-        }
-    }
+pipeline {
+    agent any
 
-        options {
+    options {
         disableConcurrentBuilds()
     }
 
     environment {
         IMAGE_NAME = "akhil182/e2e_springboot_project"
-        GIT_USER = "gunjalaakhil"
-        GIT_EMAIL = "gakhil0071@gmail.com"
+        GIT_USER   = "gunjalaakhil"
+        GIT_EMAIL  = "gakhil0071@gmail.com"
+        SONAR_URL  = "http://100.25.219.58:9000"
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
             }
-    }
-    stage('Debug') {
-    steps {
-        sh '''
-        pwd
-        ls -la
-        ls -la E2E_springboot_project
-        '''
-    }
-}
-
-
-    stage('Static Code Analysis') {
-      environment {
-        SONAR_URL = "http://100.25.219.58:9000"
-      }
-      steps {
-        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          sh ''' cd E2E_springboot_project
-                 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
-                 -Dsonar.token=$SONAR_AUTH_TOKEN \
-                 -Dsonar.host.url=$SONAR_URL
-             '''
         }
-      }
-    }
 
-            stage('Build and Push Image') {
+        stage('Debug') {
+            steps {
+                sh '''
+                pwd
+                ls -la
+                ls -la E2E_springboot_project
+                '''
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                cd E2E_springboot_project
+                mvn clean package
+                '''
+            }
+        }
+
+        stage('Static Code Analysis') {
+            steps {
+                withCredentials([
+                    string(
+                        credentialsId: 'sonarqube',
+                        variable: 'SONAR_AUTH_TOKEN'
+                    )
+                ]) {
+                    sh '''
+                    cd E2E_springboot_project
+
+                    mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                    -Dsonar.token=$SONAR_AUTH_TOKEN \
+                    -Dsonar.host.url=$SONAR_URL
+                    '''
+                }
+            }
+        }
+
+        stage('Build and Push Image') {
             steps {
                 script {
                     env.IMAGE_TAG = "build-${BUILD_NUMBER}"
+                }
 
-                    withCredentials([usernamePassword(
+                withCredentials([
+                    usernamePassword(
                         credentialsId: 'dockerhub-creds',
                         usernameVariable: 'DOCKER_USER',
                         passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        sh """
-                        docker build -t ${IMAGE_NAME}:${IMAGE_TAG} E2E_springboot_project
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                        """
-                    }
+                    )
+                ]) {
+                    sh '''
+                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+
+                    docker build -t akhil182/e2e_springboot_project:${BUILD_NUMBER} E2E_springboot_project
+
+                    docker push akhil182/e2e_springboot_project:${BUILD_NUMBER}
+                    '''
                 }
             }
         }
 
         stage('Update k8s manifest') {
             steps {
-                script {
-                    withCredentials([usernamePassword(
+                withCredentials([
+                    usernamePassword(
                         credentialsId: 'github-creds',
                         usernameVariable: 'GIT_USERNAME',
                         passwordVariable: 'GIT_TOKEN'
-                    )]) {
-                        sh """
-                        set -e
-                        git config user.name "$GIT_USER"
-                        git config user.email "$GIT_EMAIL"
-                        git reset --hard origin/main
+                    )
+                ]) {
+                    sh """
+                    git config user.name "$GIT_USER"
+                    git config user.email "$GIT_EMAIL"
 
-                        sed -i "s|image:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" E2E_springboot_project/k8s/deployment.yaml
+                    sed -i "s|image:.*|image: ${IMAGE_NAME}:build-${BUILD_NUMBER}|" \
+                    E2E_springboot_project/k8s/deployment.yaml
 
-                        git add E2E_springboot_project/k8s/deployment.yaml
-                        git diff --cached --quiet || git commit -m "updated image to ${IMAGE_TAG}"
-                        git push https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/gunjalaakhil/E2E_springboot_project.git HEAD:main
+                    git add E2E_springboot_project/k8s/deployment.yaml
 
-                        """
-                    }
+                    git diff --cached --quiet || \
+                    git commit -m "Updated image to build-${BUILD_NUMBER}"
+
+                    git push https://${GIT_USERNAME}:${GIT_TOKEN}@github.com/gunjalaakhil/E2E_springboot_project.git HEAD:main
+                    """
                 }
             }
         }
     }
 
+    post {
+        always {
+            cleanWs()
+        }
+    }
 }
