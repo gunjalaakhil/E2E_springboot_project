@@ -22,6 +22,16 @@ pipeline{
                 checkout scm
             }
     }
+    stage('Debug') {
+    steps {
+        sh '''
+        pwd
+        ls -la
+        ls -la E2E_springboot_project
+        '''
+    }
+}
+
 
     stage('Static Code Analysis') {
       environment {
