@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
       - name: movie-app
-        image: akhil182/
+        image: akhil182/e2e_springboot_project:build-15
         ports:
         - containerPort: 5000
