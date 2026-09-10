@@ -11,7 +11,7 @@ pipeline{
     }
 
     environment {
-        IMAGE_NAME = "akhil182/e22_springboot_project"
+        IMAGE_NAME = "akhil182/e2e_springboot_project"
         GIT_USER = "gunjalaakhil"
         GIT_EMAIL = "gakhil0071@gmail.com"
     }
@@ -25,7 +25,7 @@ pipeline{
 
     stage('Static Code Analysis') {
       environment {
-        SONAR_URL = "http://34.201.116.83:9000"
+        SONAR_URL = "http://10.25.219.58:9000"
       }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
