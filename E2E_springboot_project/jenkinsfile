@@ -19,7 +19,7 @@ pipeline{
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/gunjalaakhil/E2E_springboot_project.git'
+                checkout scm*
             }
     }
 
