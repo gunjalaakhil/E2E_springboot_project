@@ -29,7 +29,11 @@ pipeline{
       }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          sh 'cd E2E_springboot_project && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
+          sh ''' cd E2E_springboot_project
+                 mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar \
+                 -Dsonar.token=$SONAR_AUTH_TOKEN \
+                 -Dsonar.host.url=$SONAR_URL
+             '''
         }
       }
     }
