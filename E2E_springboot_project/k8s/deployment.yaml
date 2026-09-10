@@ -7,14 +7,14 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: movie-app
+      app: springboot-app
   template:
     metadata:
       labels:
-        app: movie-app
+        app: springboot-app
     spec:
       containers:
-      - name: movie-app
+      - name: springboot-app
         image: akhil182/e2e_springboot_project:build-15
         ports:
         - containerPort: 5000
