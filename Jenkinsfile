@@ -91,8 +91,8 @@ pipeline {
         }
 
         stage('Push Image') {
-            when { branch 'main' }
             steps {
+                echo "Branch Name = ${env.BRANCH_NAME}"
                 withCredentials([usernamePassword(credentialsId: 'docker-creds',
                                                   usernameVariable: 'DOCKER_USER',
                                                   passwordVariable: 'DOCKER_PASS')]) {
