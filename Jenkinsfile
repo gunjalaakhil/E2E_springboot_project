@@ -69,7 +69,7 @@ pipeline {
         stage('Generate Tag') {
             steps {
                 script {
-                    IMAGE_TAG = sh(
+                    def imageTag = sh(
                         script: "git rev-parse --short HEAD",
                         returnStdout: true
                     ).trim()
